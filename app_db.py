@@ -841,14 +841,17 @@ def create_booking(user_id: int, station_id: str, booking_date: str,
 
 
 def get_user_bookings(user_id: int) -> List[Dict[str, Any]]:
-    """Get all bookings for a user."""
+    """Get all bookings for a user (only upcoming and today's bookings)."""
     with get_conn() as conn:
         cursor = conn.execute(
             """SELECT b.*, s.name, s.city, s.state, s.nearby_landmark 
                FROM bookings b
                JOIN ev_charging_stations_reduced s ON b.station_id = s.station_id
                WHERE b.user_id = ? 
-               ORDER BY b.created_at DESC""",
+               AND b.booking_status = 'confirmed'
+               AND (b.booking_date > date('now') 
+                    OR (b.booking_date = date('now') AND b.booking_time >= time('now')))
+               ORDER BY b.booking_date ASC, b.booking_time ASC""",
             (user_id,)
         )
         bookings = cursor.fetchall()
@@ -871,6 +874,65 @@ def get_user_bookings(user_id: int) -> List[Dict[str, Any]]:
         }
         for b in bookings
     ]
+
+
+def get_user_charging_history(user_id: int) -> Dict[str, Any]:
+    """Get past charging history for a user with total spending."""
+    with get_conn() as conn:
+        # Get past completed bookings
+        cursor = conn.execute(
+            """SELECT b.*, s.name, s.city, s.state, s.nearby_landmark 
+               FROM bookings b
+               JOIN ev_charging_stations_reduced s ON b.station_id = s.station_id
+               WHERE b.user_id = ? 
+               AND b.booking_status = 'confirmed'
+               AND (b.booking_date < date('now') 
+                    OR (b.booking_date = date('now') AND b.booking_time < time('now')))
+               ORDER BY b.booking_date DESC, b.booking_time DESC""",
+            (user_id,)
+        )
+        bookings = cursor.fetchall()
+        
+        # Calculate total spending
+        cursor = conn.execute(
+            """SELECT 
+                 COUNT(*) as total_sessions,
+                 SUM(total_amount) as total_spent,
+                 SUM(duration_hours) as total_hours
+               FROM bookings 
+               WHERE user_id = ? 
+               AND booking_status = 'confirmed'
+               AND (booking_date < date('now') 
+                    OR (booking_date = date('now') AND booking_time < time('now')))""",
+            (user_id,)
+        )
+        stats = cursor.fetchone()
+    
+    history_list = [
+        {
+            'id': b[0],
+            'station_id': b[2],
+            'booking_date': b[3],
+            'booking_time': b[4],
+            'duration_hours': b[5],
+            'total_amount': b[6],
+            'payment_status': b[7],
+            'booking_status': b[8],
+            'created_at': b[9],
+            'station_name': b[10],
+            'city': b[11],
+            'state': b[12],
+            'landmark': b[13]
+        }
+        for b in bookings
+    ]
+    
+    return {
+        'history': history_list,
+        'total_sessions': stats[0] if stats else 0,
+        'total_spent': stats[1] if stats and stats[1] else 0.0,
+        'total_hours': stats[2] if stats and stats[2] else 0.0
+    }
 
 
 def get_all_bookings() -> List[Dict[str, Any]]:

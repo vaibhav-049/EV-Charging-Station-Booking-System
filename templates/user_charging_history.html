@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Charging History{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4"><i class="bi bi-clock-history me-2"></i>Charging History</h2>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card text-center" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+        <div class="card-body">
+          <h5 class="card-title"><i class="bi bi-lightning-charge-fill me-2"></i>Total Sessions</h5>
+          <h2 class="mb-0">{{ total_sessions }}</h2>
+          <small>Charging sessions completed</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card text-center" style="background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 100%); color: white;">
+        <div class="card-body">
+          <h5 class="card-title"><i class="bi bi-currency-rupee me-2"></i>Total Spent</h5>
+          <h2 class="mb-0">₹{{ "%.2f"|format(total_spent) }}</h2>
+          <small>Total charging cost</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card text-center" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
+        <div class="card-body">
+          <h5 class="card-title"><i class="bi bi-hourglass-split me-2"></i>Total Hours</h5>
+          <h2 class="mb-0">{{ "%.1f"|format(total_hours) }}</h2>
+          <small>Hours of charging</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History List -->
+  {% if history %}
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Past Charging Sessions</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th><i class="bi bi-calendar3 me-1"></i>Date</th>
+              <th><i class="bi bi-clock me-1"></i>Time</th>
+              <th><i class="bi bi-ev-station-fill me-1"></i>Station</th>
+              <th><i class="bi bi-geo-alt-fill me-1"></i>Location</th>
+              <th><i class="bi bi-hourglass-split me-1"></i>Duration</th>
+              <th><i class="bi bi-cash me-1"></i>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in history %}
+            <tr>
+              <td>{{ h.booking_date }}</td>
+              <td>{{ h.booking_time }}</td>
+              <td>
+                <a href="{{ url_for('main.station_detail', station_id=h.station_id) }}" class="text-decoration-none">
+                  {{ h.station_name }}
+                </a>
+              </td>
+              <td>{{ h.city }}, {{ h.state }}</td>
+              <td>{{ h.duration_hours }} hour{{ 's' if h.duration_hours != 1 else '' }}</td>
+              <td class="text-success fw-bold">₹{{ "%.2f"|format(h.total_amount) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer text-muted">
+      <small><i class="bi bi-info-circle me-1"></i>Showing all completed charging sessions</small>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>No charging history yet!</strong><br>
+    Start booking charging stations to see your history here.
+    <div class="mt-3">
+      <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+        <i class="bi bi-search me-2"></i>Browse Stations
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Quick Actions -->
+  <div class="mt-4 text-center">
+    <a href="{{ url_for('main.user_dashboard') }}" class="btn btn-outline-primary me-2">
+      <i class="bi bi-speedometer2 me-2"></i>Dashboard
+    </a>
+    <a href="{{ url_for('main.my_bookings') }}" class="btn btn-outline-success">
+      <i class="bi bi-calendar-check me-2"></i>Upcoming Bookings
+    </a>
+  </div>
+</div>
+{% endblock %}

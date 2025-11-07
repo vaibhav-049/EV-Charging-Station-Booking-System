@@ -14,7 +14,8 @@ from app_db import (
     create_payment_request, get_pending_payment_requests,
     get_all_payment_requests, approve_payment_request, reject_payment_request,
     get_user_payment_requests,
-    create_booking, get_user_bookings, get_all_bookings, cancel_booking
+    create_booking, get_user_bookings, get_all_bookings, cancel_booking,
+    get_user_charging_history
 )
 
 
@@ -647,6 +648,23 @@ def my_bookings():
     bookings = get_user_bookings(user_id)
     
     return f.render_template("user_bookings_list.html", bookings=bookings)
+
+
+@bp.route("/charging-history")
+def charging_history():
+    """Show user's past charging history."""
+    if not f.session.get("user_id"):
+        f.flash("Please login", "warning")
+        return f.redirect(f.url_for("main.user_login"))
+    
+    user_id = f.session.get("user_id")
+    history_data = get_user_charging_history(user_id)
+    
+    return f.render_template("user_charging_history.html", 
+                           history=history_data['history'],
+                           total_sessions=history_data['total_sessions'],
+                           total_spent=history_data['total_spent'],
+                           total_hours=history_data['total_hours'])
 
 
 @bp.route("/booking/cancel/<int:booking_id>", methods=["POST"])
