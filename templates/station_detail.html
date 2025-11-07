@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% block title %}Station {{ row.station_id }}{% endblock %}
+{% block styles %}
+<link href="{{ url_for('static', filename='css/index.css') }}" rel="stylesheet">
+<style>
+.table th{width:38%}
+.star-rating {
+  display: flex;
+  gap: 5px;
+  font-size: 1.5rem;
+}
+.star-rating input[type="radio"] {
+  display: none;
+}
+.star-rating label {
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.2s;
+}
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input[type="radio"]:checked ~ label {
+  color: #ffc107;
+}
+.review-card {
+  border-left: 4px solid #0ea5e9;
+  padding: 15px;
+  margin-bottom: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3><i class="bi bi-ev-station-fill me-2"></i>{{ row.name }} <small class="text-muted">({{ row.station_id }})</small></h3>
+  <div class="btn-group">
+    {% if session.get('user_id') %}
+      <!-- Book Now Button -->
+      <a href="{{ url_for('main.book_station', station_id=row.station_id) }}" class="btn btn-success btn-lg">
+        <i class="bi bi-calendar-check me-2"></i>Book Now
+      </a>
+      
+      <!-- Bookmark Button -->
+      {% if bookmarked %}
+        <form method="post" action="{{ url_for('main.unbookmark_station', station_id=row.station_id) }}" style="display:inline;">
+          <button type="submit" class="btn btn-warning">
+            <i class="bi bi-bookmark-fill me-2"></i>Bookmarked
+          </button>
+        </form>
+      {% else %}
+        <form method="post" action="{{ url_for('main.bookmark_station', station_id=row.station_id) }}" style="display:inline;">
+          <button type="submit" class="btn btn-outline-warning">
+            <i class="bi bi-bookmark me-2"></i>Bookmark
+          </button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+{% if avg_rating %}
+<div class="alert alert-info">
+  <i class="bi bi-star-fill text-warning me-2"></i>
+  <strong>Average Rating: {{ avg_rating }}/5.0</strong> ({{ reviews|length }} reviews)
+</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-md-6">
+    <table class="table table-bordered">
+      <tbody>
+        <tr><th>Operator</th><td>{{ row.operator }}</td></tr>
+        <tr><th>State</th><td>{{ row.state }}</td></tr>
+        <tr><th>City</th><td>{{ row.city }}</td></tr>
+        <tr><th>Pincode</th><td>{{ row.pincode }}</td></tr>
+        <tr><th>Charger Types</th><td>{{ row.charger_types }}</td></tr>
+        <tr><th># Chargers</th><td>{{ row.number_of_chargers }}</td></tr>
+        <tr><th>Power kW Each</th><td>{{ row.power_kW_each }}</td></tr>
+        <tr><th>Price/kWh (INR)</th><td>{{ row.price_per_kWh_INR }}</td></tr>
+        <tr><th>Tariff Type</th><td>{{ row.tariff_type }}</td></tr>
+        <tr><th>Payment Methods</th><td>{{ row.payment_methods }}</td></tr>
+        <tr><th>Opening Hours</th><td>{{ row.opening_hours }}</td></tr>
+        <tr><th>Contact</th><td>{{ row.contact_number }}</td></tr>
+        <tr><th>Email</th><td>{{ row.email }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-6">
+    <table class="table table-bordered">
+      <tbody>
+        <tr><th>Rating</th><td>{{ row.station_rating }}</td></tr>
+        <tr><th># Reviews</th><td>{{ row.num_reviews }}</td></tr>
+        <tr><th>Parking Spaces</th><td>{{ row.parking_spaces }}</td></tr>
+        <tr><th>Amenities</th><td>{{ row.amenities }}</td></tr>
+        <tr><th>Reservation Supported</th><td>{{ row.reservation_supported }}</td></tr>
+        <tr><th>Fast Charging</th><td>{{ row.fast_charging_supported }}</td></tr>
+        <tr><th>Nearby Landmark</th><td>{{ row.nearby_landmark }}</td></tr>
+        <tr><th>Uptime %</th><td>{{ row.uptime_percent }}</td></tr>
+        <tr><th>Status</th>
+          <td>
+            {% if row.status == 'Active' %}
+              <span class="badge bg-success">Active</span>
+            {% elif row.status == 'Offline' %}
+              <span class="badge bg-danger">Offline</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">{{ row.status }}</span>
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Reviews Section -->
+<div class="row mt-4">
+  <div class="col-12">
+    <h4><i class="bi bi-chat-left-text-fill me-2"></i>Reviews & Ratings</h4>
+  </div>
+</div>
+
+<!-- Add Review Form (only for logged-in users) -->
+{% if session.get('user_id') %}
+<div class="card mb-4">
+  <div class="card-header bg-success text-white">
+    <i class="bi bi-plus-circle me-2"></i>Add Your Review
+  </div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('main.add_station_review', station_id=row.station_id) }}">
+      <div class="mb-3">
+        <label class="form-label">Rating *</label>
+        <div class="star-rating">
+          <input type="radio" id="star5" name="rating" value="5" required>
+          <label for="star5">★</label>
+          <input type="radio" id="star4" name="rating" value="4">
+          <label for="star4">★</label>
+          <input type="radio" id="star3" name="rating" value="3">
+          <label for="star3">★</label>
+          <input type="radio" id="star2" name="rating" value="2">
+          <label for="star2">★</label>
+          <input type="radio" id="star1" name="rating" value="1">
+          <label for="star1">★</label>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Review (Optional)</label>
+        <textarea class="form-control" name="review_text" rows="3" 
+                  placeholder="Share your experience with this charging station..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-success">
+        <i class="bi bi-send-fill me-2"></i>Submit Review
+      </button>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-warning">
+  <i class="bi bi-info-circle me-2"></i>
+  Please <a href="{{ url_for('main.user_login') }}">login</a> to add a review.
+</div>
+{% endif %}
+
+<!-- Display Reviews -->
+<div class="card">
+  <div class="card-header">
+    <i class="bi bi-chat-dots-fill me-2"></i>User Reviews ({{ reviews|length }})
+  </div>
+  <div class="card-body">
+    {% if reviews %}
+      {% for review in reviews %}
+      <div class="review-card">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <strong><i class="bi bi-person-circle me-2"></i>{{ review.user_name }}</strong>
+            <div class="text-warning">
+              {% for i in range(review.rating) %}★{% endfor %}
+              {% for i in range(5 - review.rating) %}☆{% endfor %}
+              <span class="text-muted ms-2">{{ review.rating }}/5</span>
+            </div>
+          </div>
+          <small class="text-muted">{{ review.created_at }}</small>
+        </div>
+        {% if review.review_text %}
+        <p class="mb-0">{{ review.review_text }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-muted mb-0">
+        <i class="bi bi-info-circle me-2"></i>No reviews yet. Be the first to review this station!
+      </p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Comments Section -->
+<div class="row mt-4">
+  <div class="col-12">
+    <h4><i class="bi bi-chat-square-text-fill me-2"></i>Comments & Discussion</h4>
+  </div>
+</div>
+
+<!-- Add Comment Form -->
+{% if session.get('user_id') %}
+<div class="card mb-4">
+  <div class="card-header bg-info text-white">
+    <i class="bi bi-chat-left-dots me-2"></i>Add a Comment
+  </div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('main.add_station_comment', station_id=row.station_id) }}">
+      <div class="mb-3">
+        <textarea class="form-control" name="comment_text" rows="3" 
+                  placeholder="Share your thoughts, ask questions, or provide tips..." required></textarea>
+      </div>
+      <button type="submit" class="btn btn-info">
+        <i class="bi bi-send-fill me-2"></i>Post Comment
+      </button>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-warning mb-4">
+  <i class="bi bi-info-circle me-2"></i>
+  Please <a href="{{ url_for('main.user_login') }}">login</a> to add comments.
+</div>
+{% endif %}
+
+<!-- Display Comments -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-chat-square-dots-fill me-2"></i>Comments ({{ comments|length }})
+  </div>
+  <div class="card-body">
+    {% if comments %}
+      {% for comment in comments %}
+      <div class="review-card">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <strong><i class="bi bi-person-circle me-2"></i>{{ comment.user_name }}</strong>
+          <small class="text-muted">{{ comment.created_at }}</small>
+        </div>
+        <p class="mb-0">{{ comment.comment_text }}</p>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-muted mb-0">
+        <i class="bi bi-info-circle me-2"></i>No comments yet. Start the discussion!
+      </p>
+    {% endif %}
+  </div>
+</div>
+
+<a class="btn btn-secondary mt-3" href="{{ url_for('main.index') }}">
+  <i class="bi bi-arrow-left me-2"></i>Back to Stations
+</a>
+{% endblock %}

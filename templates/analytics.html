@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<h3>Dashboard Analytics</h3>
+<div id="charts" class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">Stations by City (Pie)</div>
+      <div class="card-body">
+        <div id="cityPie"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">Stations by City</div>
+      <div class="card-body">
+        <div id="cityBar"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">Average Price by City</div>
+      <div class="card-body">
+        <div id="priceBar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script id="rows-data" type="application/json">{{ rows | tojson }}</script>
+<script>
+  const rows = JSON.parse(document.getElementById('rows-data').textContent);
+  // Stations by City (Pie - top 10)
+  const cityCountsAll = rows.reduce((acc, r) => {
+    const k = (r.city || 'Unknown');
+    acc[k] = (acc[k] || 0) + 1; return acc;
+  }, {});
+  const cityTop10 = Object.entries(cityCountsAll).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  Plotly.newPlot('cityPie', [{
+    labels: cityTop10.map(p=>p[0]),
+    values: cityTop10.map(p=>p[1]),
+    type: 'pie', hole: 0.35
+  }], {margin: {t: 10}});
+  // City Bar (top 15)
+  const cityCounts = cityCountsAll;
+  const cityPairs = Object.entries(cityCounts).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  Plotly.newPlot('cityBar', [{
+    x: cityPairs.map(p=>p[0]), y: cityPairs.map(p=>p[1]), type: 'bar'
+  }], {margin: {t: 10}, xaxis: {automargin: true}});
+  // Average Price by City
+  const priceAggCity = rows.reduce((acc, r) => {
+    const city = r.city || 'Unknown';
+    const price = parseFloat(r.price_per_kWh_INR || '0');
+    if (!acc[city]) acc[city] = {sum:0, n:0};
+    acc[city].sum += isNaN(price) ? 0 : price;
+    acc[city].n += 1;
+    return acc;
+  }, {});
+  const pricePairs = Object.entries(priceAggCity)
+    .map(([k,v])=>[k, v.sum/(v.n||1)])
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,15);
+  Plotly.newPlot('priceBar', [{
+    x: pricePairs.map(p=>p[0]), y: pricePairs.map(p=>p[1]), type: 'bar'
+  }], {margin: {t: 10}, xaxis: {automargin: true}, yaxis: {title: 'INR/kWh'}});
+</script>
+{% endblock %}

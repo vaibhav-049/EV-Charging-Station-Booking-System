@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Admin Login{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+{% block navbar %}{% endblock %}
+{% block styles %}<link href="{{ url_for('static', filename='css/auth.css') }}" rel="stylesheet">{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="text-center mb-3">
+    <span class="brand-pill">⚡ Admin Portal</span>
+    <h2 class="mt-2">Sign in to continue</h2>
+    <p class="text-muted">Enter your admin password to access the dashboard</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card auth-card-elevated">
+        <div class="card-body">
+          <form method="post">
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input class="form-control form-control-lg" type="password" name="password" placeholder="Enter admin password" required>
+            </div>
+            <button class="btn btn-primary btn-lg w-100" type="submit">Login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

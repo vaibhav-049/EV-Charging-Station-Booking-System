@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% block title %}My Dashboard{% endblock %}
+{% block styles %}<link href="{{ url_for('static', filename='css/index.css') }}" rel="stylesheet">{% endblock %}
+{% block content %}
+<h3><i class="bi bi-speedometer2 me-2"></i>My Dashboard</h3>
+<p class="text-muted">Welcome back, {{ session.get('user_name') }}!</p>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-2">
+    <div class="card text-center" style="background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);">
+      <div class="card-body text-white">
+        <h1><i class="bi bi-bookmark-fill"></i></h1>
+        <h3>{{ bookmarks|length }}</h3>
+        <p class="mb-0">Bookmarks</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card text-center" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+      <div class="card-body text-white">
+        <h1><i class="bi bi-star-fill"></i></h1>
+        <h3>{{ reviews|length }}</h3>
+        <p class="mb-0">Reviews</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card text-center" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+      <div class="card-body text-white">
+        <h1><i class="bi bi-calendar-check"></i></h1>
+        <h3>{{ bookings|length }}</h3>
+        <p class="mb-0">Bookings</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+      <div class="card-body text-white">
+        <h1><i class="bi bi-wallet2"></i></h1>
+        <h3>₹{{ "%.0f"|format(wallet_balance) }}</h3>
+        <p class="mb-0">Wallet Balance</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+      <div class="card-body text-white">
+        <h1><i class="bi bi-bell-fill"></i></h1>
+        <h3>{{ unread_count }}</h3>
+        <p class="mb-0">Notifications</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-lightning-fill me-2"></i>Quick Actions
+  </div>
+  <div class="card-body">
+    <div class="row g-2">
+      <div class="col-md-2">
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary w-100">
+          <i class="bi bi-search me-2"></i>Browse
+        </a>
+      </div>
+      <div class="col-md-2">
+        <a href="{{ url_for('main.my_bookings') }}" class="btn btn-outline-success w-100">
+          <i class="bi bi-calendar-check me-2"></i>Bookings
+        </a>
+      </div>
+      <div class="col-md-2">
+        <a href="{{ url_for('main.user_wallet') }}" class="btn btn-outline-warning w-100">
+          <i class="bi bi-wallet2 me-2"></i>Wallet
+        </a>
+      </div>
+      <div class="col-md-2">
+        <a href="{{ url_for('main.user_bookmarks') }}" class="btn btn-outline-info w-100">
+          <i class="bi bi-bookmark-fill me-2"></i>Bookmarks
+        </a>
+      </div>
+      <div class="col-md-2">
+        <a href="{{ url_for('main.user_reviews') }}" class="btn btn-outline-secondary w-100">
+          <i class="bi bi-star-fill me-2"></i>Reviews
+        </a>
+      </div>
+      <div class="col-md-2">
+        <a href="{{ url_for('main.user_notifications_page') }}" class="btn btn-outline-danger w-100">
+          <i class="bi bi-bell-fill me-2"></i>Alerts
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Recent Bookmarks -->
+  <div class="col-md-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-bookmark-star-fill me-2"></i>Recent Bookmarks
+      </div>
+      <div class="card-body">
+        {% if bookmarks %}
+          <div class="list-group list-group-flush">
+            {% for b in bookmarks[:5] %}
+            <a href="{{ url_for('main.station_detail', station_id=b.station_id) }}" 
+               class="list-group-item list-group-item-action">
+              <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1">{{ b.name }}</h6>
+                <small>{{ b.bookmarked_at }}</small>
+              </div>
+              <p class="mb-1 text-muted small">
+                <i class="bi bi-geo-alt me-1"></i>{{ b.city }}
+              </p>
+            </a>
+            {% endfor %}
+          </div>
+          <div class="mt-3">
+            <a href="{{ url_for('main.user_bookmarks') }}" class="btn btn-sm btn-primary">
+              View All Bookmarks
+            </a>
+          </div>
+        {% else %}
+          <p class="text-muted">No bookmarks yet. Start exploring stations!</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Searches -->
+  <div class="col-md-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-clock-history me-2"></i>Recent Searches
+      </div>
+      <div class="card-body">
+        {% if recent_searches %}
+          <div class="list-group list-group-flush">
+            {% for search in recent_searches %}
+            <div class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1"><i class="bi bi-search me-2"></i>{{ search.search_term }}</h6>
+                <small class="text-muted">{{ search.created_at }}</small>
+              </div>
+              {% if search.search_filters %}
+                <small class="text-muted">Filters: {{ search.search_filters }}</small>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No search history yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Reviews -->
+  <div class="col-md-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-star-half me-2"></i>Your Recent Reviews
+      </div>
+      <div class="card-body">
+        {% if reviews %}
+          <div class="list-group list-group-flush">
+            {% for review in reviews[:5] %}
+            <a href="{{ url_for('main.station_detail', station_id=review.station_id) }}"
+               class="list-group-item list-group-item-action">
+              <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1">{{ review.station_name or review.station_id }}</h6>
+                <span class="text-warning">
+                  {% for i in range(review.rating) %}★{% endfor %}
+                </span>
+              </div>
+              {% if review.review_text %}
+                <p class="mb-1 small">{{ review.review_text[:100] }}...</p>
+              {% endif %}
+              <small class="text-muted">{{ review.created_at }}</small>
+            </a>
+            {% endfor %}
+          </div>
+          <div class="mt-3">
+            <a href="{{ url_for('main.user_reviews') }}" class="btn btn-sm btn-success">
+              View All Reviews
+            </a>
+          </div>
+        {% else %}
+          <p class="text-muted">No reviews yet. Share your experience!</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="col-md-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-bell-fill me-2"></i>Recent Notifications
+        {% if unread_count > 0 %}
+          <span class="badge bg-danger">{{ unread_count }}</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        {% if notifications %}
+          <div class="list-group list-group-flush">
+            {% for notif in notifications[:5] %}
+            <div class="list-group-item {% if not notif.is_read %}bg-light{% endif %}">
+              <div class="d-flex w-100 justify-content-between">
+                <p class="mb-1">
+                  {% if not notif.is_read %}<i class="bi bi-circle-fill text-primary" style="font-size:0.5rem;"></i>{% endif %}
+                  {{ notif.message }}
+                </p>
+                <small>{{ notif.created_at }}</small>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="mt-3">
+            <a href="{{ url_for('main.user_notifications_page') }}" class="btn btn-sm btn-warning">
+              View All Notifications
+            </a>
+          </div>
+        {% else %}
+          <p class="text-muted">No notifications yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

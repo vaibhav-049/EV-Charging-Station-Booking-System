@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}User Login{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+{% block navbar %}{% endblock %}
+{% block styles %}<link href="{{ url_for('static', filename='css/auth.css') }}" rel="stylesheet">{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="text-center mb-3">
+    <span class="brand-pill">👋 Welcome back</span>
+    <h2 class="mt-2">Log in to your account</h2>
+    <p class="text-muted">Access your personalized EV stations experience</p>
+  </div>
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card auth-card-elevated">
+        <div class="card-body">
+          <form method="post">
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input class="form-control form-control-lg" type="email" name="email" placeholder="you@example.com" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input class="form-control form-control-lg" type="password" name="password" placeholder="Enter your password" required>
+            </div>
+            <button class="btn btn-primary btn-lg w-100" type="submit">Continue</button>
+            <div class="d-flex justify-content-between mt-2 small">
+              <span class="text-muted">New here?</span>
+              <a class="text-decoration-none" href="{{ url_for('main.user_signup') }}">Create an account →</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

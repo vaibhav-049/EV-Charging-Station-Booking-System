@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}All Bookings - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="mb-4"><i class="bi bi-calendar-check me-2"></i>All Bookings</h2>
+
+  {% if bookings %}
+  <div class="card shadow">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-primary">
+            <tr>
+              <th>ID</th>
+              <th>User</th>
+              <th>Station</th>
+              <th>Location</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Duration</th>
+              <th>Amount</th>
+              <th>Payment Status</th>
+              <th>Booking Status</th>
+              <th>Booked On</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in bookings %}
+            <tr>
+              <td>{{ booking.id }}</td>
+              <td>
+                <strong>{{ booking.user_name }}</strong><br>
+                <small class="text-muted">{{ booking.user_email }}</small>
+              </td>
+              <td>{{ booking.station_name }}</td>
+              <td>{{ booking.city }}, {{ booking.state }}</td>
+              <td>{{ booking.booking_date }}</td>
+              <td>{{ booking.booking_time }}</td>
+              <td>{{ booking.duration_hours }} hrs</td>
+              <td>₹{{ "%.2f"|format(booking.total_amount) }}</td>
+              <td>
+                {% if booking.payment_status == 'paid' %}
+                  <span class="badge bg-success">Paid</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if booking.booking_status == 'confirmed' %}
+                  <span class="badge bg-success">Confirmed</span>
+                {% elif booking.booking_status == 'cancelled' %}
+                  <span class="badge bg-secondary">Cancelled</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">{{ booking.booking_status }}</span>
+                {% endif %}
+              </td>
+              <td><small>{{ booking.created_at }}</small></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>No bookings yet
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

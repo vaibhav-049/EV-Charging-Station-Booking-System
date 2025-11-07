@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block title %}Admin - Stations{% endblock %}
+{% block styles %}<link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">{% endblock %}
+{% block content %}
+<h3>Manage Stations</h3>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">Add/Update Station</div>
+      <div class="card-body">
+        <form method="post">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Station ID</label>
+              <input class="form-control" name="station_id" placeholder="STN0101" required>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Name</label>
+              <input class="form-control" name="name">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Operator</label>
+              <input class="form-control" name="operator">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">State</label>
+              <input class="form-control" name="state">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">City</label>
+              <input class="form-control" name="city">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Pincode</label>
+              <input class="form-control" name="pincode">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Charger Types</label>
+              <input class="form-control" name="charger_types" placeholder="AC Type2;DC CCS2">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label"># Chargers</label>
+              <input class="form-control" name="number_of_chargers" type="number" value="0">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Power kW Each</label>
+              <input class="form-control" name="power_kW_each" placeholder="22;150;350">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Price/kWh (INR)</label>
+              <input class="form-control" name="price_per_kWh_INR" type="number" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Tariff Type</label>
+              <input class="form-control" name="tariff_type">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Payment Methods</label>
+              <input class="form-control" name="payment_methods">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Opening Hours</label>
+              <input class="form-control" name="opening_hours">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Contact</label>
+              <input class="form-control" name="contact_number">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Email</label>
+              <input class="form-control" name="email">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Rating</label>
+              <input class="form-control" name="station_rating" type="number" step="0.1" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label"># Reviews</label>
+              <input class="form-control" name="num_reviews" type="number" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Parking Spaces</label>
+              <input class="form-control" name="parking_spaces" type="number" value="0">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Amenities</label>
+              <input class="form-control" name="amenities">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nearby Landmark</label>
+              <input class="form-control" name="nearby_landmark">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Reservation Supported</label>
+              <select class="form-select" name="reservation_supported">
+                <option>Yes</option>
+                <option>No</option>
+                <option>Unknown</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Fast Charging</label>
+              <select class="form-select" name="fast_charging_supported">
+                <option>Yes</option>
+                <option>No</option>
+                <option>Unknown</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Uptime %</label>
+              <input class="form-control" name="uptime_percent" type="number" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Status</label>
+              <select class="form-select" name="status">
+                <option>Active</option>
+                <option>Offline</option>
+                <option>Under Maintenance</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">Delete Station</div>
+      <div class="card-body">
+        <div class="table-responsive" style="max-height: 450px; overflow:auto">
+          <table class="table table-sm table-bordered">
+            <thead>
+              <tr>
+                <th>Station ID</th>
+                <th>Name</th>
+                <th>City</th>
+                <th>Operator</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in df.itertuples(index=False) %}
+              <tr>
+                <td>{{ r.station_id }}</td>
+                <td>{{ r.name }}</td>
+                <td>{{ r.city }}</td>
+                <td>{{ r.operator }}</td>
+                <td>
+                  <form method="post" action="{{ url_for('main.admin_delete_station') }}" onsubmit="return confirm('Delete '+this.station_id.value+'?')">
+                    <input type="hidden" name="station_id" value="{{ r.station_id }}">
+                    <button class="btn btn-sm btn-danger">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4"><i class="bi bi-calendar-check me-2"></i>My Bookings</h2>
+
+  {% if bookings %}
+  <div class="row">
+    {% for booking in bookings %}
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header {% if booking.booking_status == 'confirmed' %}bg-success{% elif booking.booking_status == 'cancelled' %}bg-secondary{% else %}bg-warning{% endif %} text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-ev-station-fill me-2"></i>{{ booking.station_name }}
+            <span class="badge bg-light text-dark float-end">{{ booking.booking_status|upper }}</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-2"><i class="bi bi-geo-alt-fill me-2"></i><strong>Location:</strong> {{ booking.city }}, {{ booking.state }}</p>
+          <p class="mb-2"><i class="bi bi-calendar3 me-2"></i><strong>Date:</strong> {{ booking.booking_date }}</p>
+          <p class="mb-2"><i class="bi bi-clock me-2"></i><strong>Time:</strong> {{ booking.booking_time }}</p>
+          <p class="mb-2"><i class="bi bi-hourglass-split me-2"></i><strong>Duration:</strong> {{ booking.duration_hours }} hours</p>
+          <p class="mb-2"><i class="bi bi-cash me-2"></i><strong>Amount Paid:</strong> ₹{{ "%.2f"|format(booking.total_amount) }}</p>
+          
+          <hr>
+          
+          {% if booking.booking_status == 'confirmed' %}
+          <div class="d-flex gap-2">
+            <!-- Get Directions Button -->
+            <button class="btn btn-primary flex-fill" onclick="openDirections('{{ booking.station_name }}', '{{ booking.city }}', '{{ booking.state }}')">
+              <i class="bi bi-map me-2"></i>Get Directions
+            </button>
+            
+            <!-- Cancel Booking -->
+            <form method="POST" action="{{ url_for('main.cancel_booking_route', booking_id=booking.id) }}" 
+                  onsubmit="return confirm('Are you sure you want to cancel this booking? Amount will be refunded to wallet.')" 
+                  class="flex-fill">
+              <button type="submit" class="btn btn-danger w-100">
+                <i class="bi bi-x-circle me-2"></i>Cancel
+              </button>
+            </form>
+          </div>
+          {% else %}
+          <div class="alert alert-secondary mb-0">
+            <i class="bi bi-info-circle me-2"></i>This booking has been cancelled.
+          </div>
+          {% endif %}
+        </div>
+        <div class="card-footer text-muted small">
+          Booked on: {{ booking.created_at }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>No bookings yet!</strong><br>
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary mt-3">
+      <i class="bi bi-search me-2"></i>Browse Charging Stations
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function openDirections(stationName, city, state) {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const userLat = position.coords.latitude;
+      const userLng = position.coords.longitude;
+      
+      // Station address
+      const stationAddress = encodeURIComponent(stationName + ', ' + city + ', ' + state);
+      
+      // Open Google Maps with directions from current location
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${stationAddress}&travelmode=driving`;
+      window.open(mapsUrl, '_blank');
+    }, function(error) {
+      // If location access denied, just open station location
+      const stationAddress = encodeURIComponent(stationName + ', ' + city + ', ' + state);
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${stationAddress}`;
+      window.open(mapsUrl, '_blank');
+    });
+  } else {
+    alert('Geolocation is not supported by your browser');
+  }
+}
+</script>
+{% endblock %}
