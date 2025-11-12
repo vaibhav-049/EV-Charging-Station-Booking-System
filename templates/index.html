@@ -47,17 +47,49 @@
   font-size: 0.8rem;
   font-weight: 600;
 }
+/* Custom modal styling for clickability */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1050;
+  overflow: auto;
+}
+.modal-dialog {
+  position: relative;
+  margin: 1.75rem auto;
+  max-width: 500px;
+  pointer-events: auto;
+}
+.modal-content {
+  position: relative;
+  background-color: #fff;
+  border: 1px solid rgba(0,0,0,.2);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.5);
+  pointer-events: auto;
+}
+.modal-dialog-centered {
+  display: flex;
+  align-items: center;
+  min-height: calc(100% - 3.5rem);
+}
+.modal-footer .btn {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
 </style>
 {% endblock %}
 {% block content %}
 
-<!-- Location Permission Modal -->
 {% if session.get('user_id') %}
-<div class="modal fade" id="locationModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal" id="locationModal" tabindex="-1" style="display: none; background-color: rgba(0,0,0,0.5);">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title"><i class="bi bi-geo-alt-fill me-2"></i>Enable Location</h5>
+        <h5 class="modal-title" id="locationModalLabel"><i class="bi bi-geo-alt-fill me-2"></i>Enable Location</h5>
       </div>
       <div class="modal-body text-center py-4">
         <i class="bi bi-geo-alt-fill text-primary" style="font-size: 4rem;"></i>
@@ -65,10 +97,10 @@
         <p class="text-muted">Allow location access to see charging stations near you sorted by distance.</p>
       </div>
       <div class="modal-footer justify-content-center">
-        <button type="button" class="btn btn-success btn-lg" onclick="enableLocation()">
+        <button type="button" class="btn btn-success btn-lg" id="enableLocationBtn" onclick="enableLocation()">
           <i class="bi bi-check-circle me-2"></i>Yes, Enable Location
         </button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+        <button type="button" class="btn btn-outline-secondary btn-lg" id="notNowBtn" onclick="closeLocationModal()">
           <i class="bi bi-x-circle me-2"></i>Not Now
         </button>
       </div>
@@ -297,27 +329,38 @@
 </div>
 
 <script>
-// User location
 let userLocation = null;
 
-// Check if location permission should be asked
+function openLocationModal() {
+  const modal = document.getElementById('locationModal');
+  if (modal) {
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeLocationModal() {
+  const modal = document.getElementById('locationModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+}
+
 window.addEventListener('DOMContentLoaded', function() {
-  const locationAsked = sessionStorage.getItem('locationAsked');
+  const locationEnabled = sessionStorage.getItem('locationEnabled');
+  
   {% if session.get('user_id') %}
-  if (!locationAsked) {
-    const modal = new bootstrap.Modal(document.getElementById('locationModal'));
-    modal.show();
-    sessionStorage.setItem('locationAsked', 'true');
+  if (!locationEnabled) {
+    openLocationModal();
   } else {
-    // Try to get location silently if already asked
     tryGetLocation();
   }
   {% endif %}
 });
 
 function enableLocation() {
-  const modal = bootstrap.Modal.getInstance(document.getElementById('locationModal'));
-  modal.hide();
+  closeLocationModal();
   
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -326,13 +369,17 @@ function enableLocation() {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
+        sessionStorage.setItem('locationEnabled', 'true');
         sortStationsByDistance();
         showSuccessMessage();
       },
       function(error) {
-        console.log('Location access denied');
+        sessionStorage.removeItem('locationEnabled');
+        alert('Location access was denied. Please enable location in your browser settings to see nearby stations.');
       }
     );
+  } else {
+    alert('Geolocation is not supported by your browser.');
   }
 }
 
@@ -475,16 +522,16 @@ function loadMap() {
     return;
   }
   
-  // Calculate center point (average of all stations or user location)
   let centerLat, centerLng;
   if (userLocation) {
     centerLat = userLocation.lat;
     centerLng = userLocation.lng;
-    console.log('Using user location:', centerLat, centerLng);
+  } else if (stations.length > 0) {
+    centerLat = stations[0].lat;
+    centerLng = stations[0].lng;
   } else {
-    centerLat = stations.reduce((sum, s) => sum + s.lat, 0) / stations.length;
-    centerLng = stations.reduce((sum, s) => sum + s.lng, 0) / stations.length;
-    console.log('Using average location:', centerLat, centerLng);
+    centerLat = 23.0225;
+    centerLng = 72.5714;
   }
   
   // Use simpler Google Maps embed (without too many markers)
@@ -495,7 +542,20 @@ function loadMap() {
   
   console.log('Loading map with center:', centerLat, centerLng);
   
+  // Add location prompt if user hasn't enabled location
+  const locationPrompt = !userLocation ? `
+    <div class="alert alert-info alert-dismissible fade show m-3" role="alert">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong>Tip:</strong> Enable location to center map on your current position!
+      <button type="button" class="btn btn-sm btn-primary ms-2" onclick="openLocationModal()">
+        <i class="bi bi-geo-alt-fill me-1"></i>Enable Location
+      </button>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  ` : '';
+  
   mapDiv.innerHTML = `
+    ${locationPrompt}
     <div class="position-relative">
       <iframe 
         width="100%" 
@@ -508,6 +568,7 @@ function loadMap() {
       </iframe>
       <div class="position-absolute top-0 start-0 m-3 bg-white px-3 py-2 rounded shadow-sm">
         <small class="text-muted"><i class="bi bi-geo-alt-fill text-danger me-1"></i>${stations.length} stations</small>
+        ${userLocation ? '<br><small class="text-success"><i class="bi bi-geo-fill me-1"></i>Your Location</small>' : ''}
       </div>
     </div>
   `;
