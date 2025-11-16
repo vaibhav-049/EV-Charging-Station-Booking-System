@@ -350,11 +350,14 @@ function closeLocationModal() {
 window.addEventListener('DOMContentLoaded', function() {
   const locationEnabled = sessionStorage.getItem('locationEnabled');
   
+  // Try to get location automatically on page load
+  tryGetLocation();
+  
   {% if session.get('user_id') %}
   if (!locationEnabled) {
-    openLocationModal();
-  } else {
-    tryGetLocation();
+    setTimeout(() => {
+      openLocationModal();
+    }, 2000); // Show modal after 2 seconds if location not already enabled
   }
   {% endif %}
 });
@@ -392,6 +395,10 @@ function tryGetLocation() {
           lng: position.coords.longitude
         };
         sortStationsByDistance();
+        // Reload map to center on user location if map view is active
+        if (!isTableView && document.getElementById('map')) {
+          loadMap();
+        }
       },
       function(error) {
         // Silently fail
