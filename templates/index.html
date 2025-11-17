@@ -375,6 +375,10 @@ function enableLocation() {
         sessionStorage.setItem('locationEnabled', 'true');
         sortStationsByDistance();
         showSuccessMessage();
+        // Reload map to center on user location if map view is active
+        if (document.getElementById('mapContainer').style.display === 'block' && document.getElementById('map')) {
+          loadMap();
+        }
       },
       function(error) {
         sessionStorage.removeItem('locationEnabled');
